@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MR INVISIBLE - QRIS Payment Gateway</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: 
+                linear-gradient(rgba(26, 26, 46, 0.85), rgba(22, 33, 62, 0.9)),
+                url('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAQABADASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH/2Q==');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: #f0f0f0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+        
+        /* Overlay untuk meningkatkan keterbacaan */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.85) 0%, rgba(22, 33, 62, 0.9) 100%);
+            z-index: -1;
+        }
+        
+        /* Efek tekstur halus */
+        body::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(233, 69, 96, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 85% 30%, rgba(15, 52, 96, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 50% 80%, rgba(26, 35, 126, 0.1) 0%, transparent 20%);
+            z-index: -1;
+        }
+        
+        .payment-container {
+            width: 100%;
+            max-width: 500px;
+            background-color: rgba(25, 25, 40, 0.85);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.6),
+                0 0 0 1px rgba(233, 69, 96, 0.1);
+            position: relative;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Efek cahaya pada container */
+        .payment-container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, 
+                rgba(233, 69, 96, 0.3), 
+                rgba(15, 52, 96, 0.3), 
+                rgba(26, 35, 126, 0.3));
+            border-radius: 22px;
+            z-index: -1;
+            animation: borderGlow 3s ease-in-out infinite alternate;
+        }
+        
+        @keyframes borderGlow {
+            0% {
+                opacity: 0.5;
+            }
+            100% {
+                opacity: 0.8;
+            }
+        }
+        
+        .header {
+            background: linear-gradient(to right, 
+                rgba(15, 52, 96, 0.8), 
+                rgba(26, 26, 46, 0.8));
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            border-bottom: 1px solid rgba(233, 69, 96, 0.2);
+        }
+        
+        /* Efek garis bergerak di header */
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(233, 69, 96, 0.8), 
+                transparent);
+            animation: lineMove 2s linear infinite;
+        }
+        
+        @keyframes lineMove {
+            0% {
+                background-position: -100% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+            color: #e94560;
+            text-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.5),
+                0 0 10px rgba(233, 69, 96, 0.3);
+            letter-spacing: 1px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .scroll-container {
+            overflow-x: auto;
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+            scroll-behavior: smooth;
+            cursor: grab;
+        }
+        
+        .scroll-container:active {
+            cursor: grabbing;
+        }
+        
+        .scroll-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .scroll-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        
+        .scroll-container::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #e94560, #1a237e);
+            border-radius: 10px;
+        }
+        
+        .payment-card {
+            min-width: 300px;
+            background: linear-gradient(145deg, 
+                rgba(15, 52, 96, 0.7), 
+                rgba(26, 26, 46, 0.7));
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 
+                0 5px 15px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Efek cahaya pada kartu */
+        .payment-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.05), 
+                transparent);
+            transition: left 0.7s ease;
+        }
+        
+        .payment-card:hover::before {
+            left: 100%;
+        }
+        
+        .payment-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 
+                0 10px 25px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(233, 69, 96, 0.2);
+        }
+        
+        .payment-title {
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #e94560;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .payment-title i {
+            font-size: 24px;
+            filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
+        }
+        
+        .qris-container {
+            background: linear-gradient(145deg, #ffffff, #f5f5f5);
+            padding: 25px;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 5px 15px rgba(0, 0, 0, 0.2),
+                inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Efek pinggiran pada QRIS container */
+        .qris-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 2px solid transparent;
+            border-radius: 13px;
+            background: linear-gradient(45deg, #e94560, #1a237e) border-box;
+            -webkit-mask: 
+                linear-gradient(#fff 0 0) padding-box, 
+                linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            animation: borderRotate 3s linear infinite;
+        }
+        
+        @keyframes borderRotate {
+            to {
+                transform: rotate(1turn);
+            }
+        }
+        
+        .qris-header {
+            text-align: center;
+            margin-bottom: 15px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .qris-main-title {
+            font-size: 16px;
+            color: #1a237e;
+            font-weight: bold;
+            margin-bottom: 5px;
+            letter-spacing: 0.5px;
+        }
+        
+        .qris-subtitle {
+            font-size: 14px;
+            color: #444;
+            margin-bottom: 10px;
+        }
+        
+        .qris-brand {
+            font-size: 18px;
+            color: #1a237e;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        
+        .qris-code {
+            width: 220px;
+            height: 220px;
+            margin: 10px auto;
+            display: block;
+            border: 3px solid #1a237e;
+            border-radius: 10px;
+            background-color: white;
+            padding: 10px;
+            box-shadow: 0 5px 15px rgba(26, 35, 126, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .qris-code:hover {
+            transform: scale(1.03);
+            box-shadow: 0 8px 20px rgba(26, 35, 126, 0.3);
+        }
+        
+        .qris-details {
+            margin-top: 15px;
+            text-align: center;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .qris-nmid {
+            font-size: 14px;
+            color: #444;
+            font-weight: 600;
+            margin-bottom: 5px;
+            letter-spacing: 0.5px;
+        }
+        
+        .qris-id {
+            font-size: 16px;
+            color: #1a237e;
+            font-weight: bold;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+            padding: 8px;
+            background-color: rgba(26, 35, 126, 0.1);
+            border-radius: 8px;
+            display: inline-block;
+        }
+        
+        .gpn-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 8px 20px;
+            background: linear-gradient(45deg, #1a237e, #283593);
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 3px 10px rgba(26, 35, 126, 0.3);
+        }
+        
+        .gpn-logo .gpn-circle {
+            width: 22px;
+            height: 22px;
+            background-color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1a237e;
+            font-weight: bold;
+            font-size: 12px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .info-section {
+            margin-bottom: 25px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #a9b7d6;
+        }
+        
+        .info-value {
+            font-weight: 500;
+            color: #ffffff;
+        }
+        
+        .copy-section {
+            background: linear-gradient(145deg, 
+                rgba(15, 52, 96, 0.4), 
+                rgba(26, 26, 46, 0.4));
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .copy-label {
+            font-size: 14px;
+            color: #a9b7d6;
+            margin-bottom: 5px;
+        }
+        
+        .copy-box {
+            display: flex;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .copy-text {
+            flex: 1;
+            padding: 12px 15px;
+            background-color: transparent;
+            border: none;
+            color: white;
+            font-size: 16px;
+            letter-spacing: 1px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .copy-btn {
+            background: linear-gradient(45deg, #e94560, #ff2e63);
+            color: white;
+            border: none;
+            padding: 0 20px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .copy-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.2), 
+                transparent);
+            transition: left 0.7s ease;
+        }
+        
+        .copy-btn:hover::before {
+            left: 100%;
+        }
+        
+        .copy-btn:hover {
+            background: linear-gradient(45deg, #ff2e63, #e94560);
+            box-shadow: 0 5px 15px rgba(233, 69, 96, 0.3);
+        }
+        
+        .copy-btn.copied {
+            background: linear-gradient(45deg, #4CAF50, #2E7D32);
+        }
+        
+        .instructions {
+            margin-top: 20px;
+        }
+        
+        .instructions h3 {
+            color: #e94560;
+            margin-bottom: 15px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        
+        .instructions ol {
+            padding-left: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+            padding-left: 5px;
+        }
+        
+        .instructions li::marker {
+            color: #e94560;
+            font-weight: bold;
+        }
+        
+        .footer {
+            background: linear-gradient(to right, 
+                rgba(15, 52, 96, 0.6), 
+                rgba(26, 26, 46, 0.6));
+            padding: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #a9b7d6;
+            border-top: 1px solid rgba(233, 69, 96, 0.2);
+            position: relative;
+        }
+        
+        .footer p {
+            margin-bottom: 10px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .footer strong {
+            color: #e94560;
+            text-shadow: 0 1px 3px rgba(233, 69, 96, 0.3);
+        }
+        
+        .navigation-dots {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            margin-bottom: 5px;
+        }
+        
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .dot::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #e94560, #1a237e);
+            border-radius: 50%;
+            transform: scale(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .dot.active::before {
+            transform: scale(1);
+        }
+        
+        .dot.active {
+            box-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+        }
+        
+        .qr-amount {
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #1a237e;
+            text-align: center;
+            background: linear-gradient(45deg, #f5f5f5, #e8eaf6);
+            padding: 10px 20px;
+            border-radius: 10px;
+            width: 100%;
+            box-shadow: 0 3px 10px rgba(26, 35, 126, 0.1);
+            border: 1px solid rgba(26, 35, 126, 0.2);
+        }
+        
+        .payment-methods {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .payment-method {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px;
+            border-radius: 10px;
+            min-width: 70px;
+            box-shadow: 
+                0 3px 10px rgba(0, 0, 0, 0.15),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .payment-method::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, 
+                rgba(233, 69, 96, 0.1), 
+                rgba(26, 35, 126, 0.1));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .payment-method:hover::before {
+            opacity: 1;
+        }
+        
+        .payment-method:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .payment-method i {
+            font-size: 28px;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .method-name {
+            font-size: 12px;
+            color: #333;
+            font-weight: 600;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        @media (max-width: 600px) {
+            .payment-card {
+                min-width: 280px;
+                padding: 20px;
+            }
+            
+            .qris-code {
+                width: 200px;
+                height: 200px;
+            }
+            
+            .header h1 {
+                font-size: 20px;
+            }
+            
+            body {
+                padding: 10px;
+            }
+        }
+        
+        @media (max-width: 400px) {
+            .payment-card {
+                min-width: 260px;
+            }
+            
+            .qris-code {
+                width: 180px;
+                height: 180px;
+            }
+            
+            .payment-methods {
+                gap: 10px;
+            }
+            
+            .payment-method {
+                min-width: 60px;
+                padding: 10px 5px;
+            }
+            
+            .payment-method i {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="payment-container">
+        <div class="header">
+            <h1><i class="fas fa-qrcode"></i> INVISIBLE ORISS - QRIS</h1>
+            <p>QR Code Standar Pembayaran Nasional</p>
+        </div>
+        
+        <div class="scroll-container" id="scrollContainer">
+            <div class="payment-card">
+                <div class="payment-title">
+                    <i class="fas fa-money-check-alt"></i> PEMBAYARAN QRIS RESMI
+                </div>
+                
+                <div class="qris-container">
+                    <div class="qris-header">
+                        <div class="qris-main-title">QR Code Standar</div>
+                        <div class="qris-subtitle">Pembayaran Nasional</div>
+                    </div>
+                    
+                    <div class="qris-brand">INVISIBLE ORISS</div>
+                    
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=00020101021126650014ID.CO.QRIS.WWW011893600911010079151520211010079150303UME51440014ID.CO.QRIS.WWW0215ID10253838340390303UME520454105802ID5914INVISIBLE ORISS6007JAKARTA6105102406238010100791503040006304" 
+                         alt="QR Code Pembayaran Nasional" 
+                         class="qris-code" 
+                         id="qrisCode">
+                    
+                    <div class="qris-details">
+                        <div class="qris-nmid">NMID</div>
+                        <div class="qris-id">ID1025383834039</div>
+                        
+                        <div class="gpn-logo">
+                            <div class="gpn-circle">G</div>
+                            <span>GPN</span>
+                        </div>
+                    </div>
+                    
+                    <div class="qr-amount" id="qrisAmount">Rp 1.000.000</div>
+                </div>
+                
+                <div class="info-section">
+                    <div class="info-row">
+                        <span class="info-label">Merchant:</span>
+                        <span class="info-value">INVISIBLE ORISS</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">NMID:</span>
+                        <span class="info-value">ID1025383834039</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Jaringan:</span>
+                        <span class="info-value">GPN (Gerbang Pembayaran Nasional)</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value" style="color: #4CAF50;">Aktif & Siap Digunakan</span>
+                    </div>
+                </div>
+                
+                <div class="payment-methods">
+                    <div class="payment-method" style="color: #00a859;">
+                        <i class="fab fa-google-pay"></i>
+                        <span class="method-name">GoPay</span>
+                    </div>
+                    <div class="payment-method" style="color: #f7b731;">
+                        <i class="fas fa-bolt"></i>
+                        <span class="method-name">DANA</span>
+                    </div>
+                    <div class="payment-method" style="color: #00a0e3;">
+                        <i class="fas fa-credit-card"></i>
+                        <span class="method-name">OVO</span>
+                    </div>
+                    <div class="payment-method" style="color: #1a237e;">
+                        <i class="fas fa-university"></i>
+                        <span class="method-name">Bank</span>
+                    </div>
+                    <div class="payment-method" style="color: #8e44ad;">
+                        <i class="fas fa-mobile-alt"></i>
+                        <span class="method-name">LinkAja</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="payment-card">
+                <div class="payment-title">
+                    <i class="fas fa-list-ol"></i> TUTORIAL PEMBAYARAN
+                </div>
+                
+                <div class="instructions">
+                    <h3><i class="fas fa-graduation-cap"></i> Cara Bayar dengan QRIS:</h3>
+                    <ol>
+                        <li>Buka aplikasi e-wallet atau mobile banking Anda</li>
+                        <li>Pilih menu <strong>Scan QRIS</strong> atau <strong>Bayar dengan QR</strong></li>
+                        <li>Arahkan kamera ke QR code INVISIBLE ORISS di atas</li>
+                        <li>Pastikan merchant yang muncul adalah <strong>INVISIBLE ORISS</strong></li>
+                        <li>Periksa nominal pembayaran yang tertera</li>
+                        <li>Konfirmasi dan selesaikan pembayaran</li>
+                        <li>Tunggu hingga notifikasi pembayaran sukses muncul</li>
+                        <li>Simpan bukti pembayaran/screenshot</li>
+                        <li>Kirim bukti ke website INVISIBLE untuk verifikasi</li>
+                        <li>INVISIBLE akan mengirim data/barang ke Anda</li>
+                    </ol>
+                    
+                    <div class="copy-section">
+                        <div class="copy-label">SALIN NMID QRIS:</div>
+                        <div class="copy-box">
+                            <input type="text" class="copy-text" id="nmidNumber" value="ID1025383834039" readonly>
+                            <button class="copy-btn" id="copyNmidBtn" data-clipboard-target="#nmidNumber">
+                                <i class="far fa-copy"></i> SALIN NMID
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="copy-section">
+                        <div class="copy-label">SALIN TUTORIAL SINGKAT:</div>
+                        <div class="copy-box">
+                            <input type="text" class="copy-text" id="tutorialText" value="1. Scan QRIS INVISIBLE ORISS 2. Konfirmasi merchant 3. Bayar 4. Simban bukti 5. Kirim ke INVISIBLE" readonly>
+                            <button class="copy-btn" id="copyTutorialBtn" data-clipboard-target="#tutorialText">
+                                <i class="far fa-copy"></i> SALIN
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="payment-card">
+                <div class="payment-title">
+                    <i class="fas fa-info-circle"></i> INFORMASI QRIS
+                </div>
+                
+                <div class="instructions">
+                    <h3><i class="fas fa-shield-alt"></i> Keamanan & Validasi:</h3>
+                    
+                    <div style="margin-bottom: 25px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding: 12px; background: rgba(26, 35, 126, 0.15); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                            <i class="fas fa-check-circle" style="color: #4CAF50; font-size: 20px;"></i>
+                            <div>
+                                <div style="font-weight: bold; color: #e94560; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">QRIS Resmi</div>
+                                <div style="font-size: 14px; color: #a9b7d6;">Terkoneksi dengan Gerbang Pembayaran Nasional (GPN)</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding: 12px; background: rgba(26, 35, 126, 0.15); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                            <i class="fas fa-bolt" style="color: #f7b731; font-size: 20px;"></i>
+                            <div>
+                                <div style="font-weight: bold; color: #e94560; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">Transaksi Real-time</div>
+                                <div style="font-size: 14px; color: #a9b7d6;">Pembayaran diproses langsung dan aman</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(26, 35, 126, 0.15); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                            <i class="fas fa-lock" style="color: #e94560; font-size: 20px;"></i>
+                            <div>
+                                <div style="font-weight: bold; color: #e94560; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">Data Terenkripsi</div>
+                                <div style="font-size: 14px; color: #a9b7d6;">Informasi pembayaran dilindungi dengan enkripsi</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3><i class="fas fa-exclamation-circle"></i> Catatan Penting:</h3>
+                    <ul style="padding-left: 20px; margin-bottom: 20px; font-size: 14px; color: #a9b7d6;">
+                        <li>Pastikan QR code terbaca dengan jelas</li>
+                        <li>Verifikasi merchant "INVISIBLE ORISS" sebelum bayar</li>
+                        <li>Transaksi akan diproses dalam 1-5 menit</li>
+                        <li>Simpan bukti pembayaran sebagai arsip</li>
+                        <li>QRIS ini hanya untuk pembayaran ke INVISIBLE MARKETPLACE</li>
+                    </ul>
+                    
+                    <div class="copy-section">
+                        <div class="copy-label">KODE REFERENSI TRANSAKSI:</div>
+                        <div class="copy-box">
+                            <input type="text" class="copy-text" id="refCode" value="INV-ORISS-2024-0895323247676" readonly>
+                            <button class="copy-btn" id="copyRefBtn" data-clipboard-target="#refCode">
+                                <i class="fas fa-hashtag"></i> SALIN KODE
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="navigation-dots">
+            <div class="dot active" data-index="0"></div>
+            <div class="dot" data-index="1"></div>
+            <div class="dot" data-index="2"></div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>INVISIBLE ORISS - QRIS STANDARD</strong></p>
+            <p>QR Code Standar Pembayaran Nasional | Gerbang Pembayaran Nasional (GPN)</p>
+            <p>TERIMA KASIH SUDAH BERBELANJA DI MR INVISIBLE MARKET PLACE</p>
+        </div>
+    </div>
+
+    <script>
+        // Implementasi scroll horizontal dengan drag
+        const scrollContainer = document.getElementById('scrollContainer');
+        let isDragging = false;
+        let startX;
+        let scrollLeft;
+        
+        scrollContainer.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            scrollContainer.classList.add('active');
+            startX = e.pageX - scrollContainer.offsetLeft;
+            scrollLeft = scrollContainer.scrollLeft;
+        });
+        
+        scrollContainer.addEventListener('mouseleave', () => {
+            isDragging = false;
+            scrollContainer.classList.remove('active');
+        });
+        
+        scrollContainer.addEventListener('mouseup', () => {
+            isDragging = false;
+            scrollContainer.classList.remove('active');
+        });
+        
+        scrollContainer.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const x = e.pageX - scrollContainer.offsetLeft;
+            const walk = (x - startX) * 1.5;
+            scrollContainer.scrollLeft = scrollLeft - walk;
+            
+            updateNavigationDots();
+        });
+        
+        // Untuk touch devices
+        scrollContainer.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            startX = e.touches[0].pageX - scrollContainer.offsetLeft;
+            scrollLeft = scrollContainer.scrollLeft;
+        });
+        
+        scrollContainer.addEventListener('touchend', () => {
+            isDragging = false;
+            updateNavigationDots();
+        });
+        
+        scrollContainer.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const x = e.touches[0].pageX - scrollContainer.offsetLeft;
+            const walk = (x - startX) * 1.5;
+            scrollContainer.scrollLeft = scrollLeft - walk;
+        });
+        
+        // Fungsi untuk tombol salin
+        function setupCopyButtons() {
+            const copyBtns = document.querySelectorAll('.copy-btn');
+            
+            copyBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const targetId = this.getAttribute('data-clipboard-target');
+                    const targetElement = document.querySelector(targetId);
+                    
+                    targetElement.select();
+                    targetElement.setSelectionRange(0, 99999);
+                    
+                    try {
+                        const successful = document.execCommand('copy');
+                        
+                        if (successful) {
+                            const originalText = this.innerHTML;
+                            this.innerHTML = '<i class="fas fa-check"></i> TERSALIN';
+                            this.classList.add('copied');
+                            
+                            // Efek sukses visual
+                            const card = this.closest('.payment-card');
+                            card.style.boxShadow = '0 5px 20px rgba(76, 175, 80, 0.4)';
+                            
+                            // Efek partikel
+                            createParticles(this);
+                            
+                            setTimeout(() => {
+                                this.innerHTML = originalText;
+                                this.classList.remove('copied');
+                                card.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.4)';
+                            }, 2000);
+                        }
+                    } catch (err) {
+                        console.error('Gagal menyalin teks: ', err);
+                    }
+                    
+                    window.getSelection().removeAllRanges();
+                });
+            });
+        }
+        
+        // Efek partikel untuk tombol salin
+        function createParticles(button) {
+            const rect = button.getBoundingClientRect();
+            const particleCount = 8;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.style.cssText = `
+                    position: fixed;
+                    width: 6px;
+                    height: 6px;
+                    background-color: #4CAF50;
+                    border-radius: 50%;
+                    pointer-events: none;
+                    z-index: 1000;
+                    left: ${rect.left + rect.width/2}px;
+                    top: ${rect.top + rect.height/2}px;
+                `;
+                
+                document.body.appendChild(particle);
+                
+                // Animasi partikel
+                const angle = (Math.PI * 2 * i) / particleCount;
+                const distance = 30 + Math.random() * 20;
+                const duration = 500 + Math.random() * 200;
+                
+                particle.animate([
+                    { 
+                        transform: 'translate(0, 0) scale(1)', 
+                        opacity: 1 
+                    },
+                    { 
+                        transform: `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px) scale(0)`, 
+                        opacity: 0 
+                    }
+                ], {
+                    duration: duration,
+                    easing: 'ease-out'
+                }).onfinish = () => {
+                    particle.remove();
+                };
+            }
+        }
+        
+        // Navigasi dengan dots
+        function setupDotNavigation() {
+            const dots = document.querySelectorAll('.dot');
+            const cards = document.querySelectorAll('.payment-card');
+            
+            dots.forEach(dot => {
+                dot.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    
+                    dots.forEach(d => d.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const cardWidth = cards[0].offsetWidth + 15;
+                    scrollContainer.scrollTo({
+                        left: index * cardWidth,
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        }
+        
+        // Update dot navigasi berdasarkan posisi scroll
+        function updateNavigationDots() {
+            const dots = document.querySelectorAll('.dot');
+            const cards = document.querySelectorAll('.payment-card');
+            const cardWidth = cards[0].offsetWidth + 15;
+            
+            const scrollPosition = scrollContainer.scrollLeft;
+            const activeIndex = Math.round(scrollPosition / cardWidth);
+            
+            dots.forEach((dot, index) => {
+                if (index === activeIndex) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+        
+        // Fungsi untuk animasi QR code
+        function setupQrCodeAnimation() {
+            const qrCode = document.getElementById('qrisCode');
+            
+            qrCode.addEventListener('mouseenter', () => {
+                qrCode.style.transform = 'scale(1.05)';
+                qrCode.style.transition = 'transform 0.3s ease';
+                qrCode.style.boxShadow = '0 8px 25px rgba(26, 35, 126, 0.4)';
+            });
+            
+            qrCode.addEventListener('mouseleave', () => {
+                qrCode.style.transform = 'scale(1)';
+                qrCode.style.boxShadow = '0 5px 15px rgba(26, 35, 126, 0.2)';
+            });
+            
+            // Efek klik pada QR code
+            qrCode.addEventListener('click', () => {
+                qrCode.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    qrCode.style.transform = 'scale(1.05)';
+                }, 150);
+                
+                // Tampilkan pesan
+                showNotification('QRIS INVISIBLE ORISS siap dipindai!');
+            });
+        }
+        
+        // Fungsi untuk menampilkan notifikasi
+        function showNotification(message) {
+            // Hapus notifikasi sebelumnya jika ada
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            // Buat elemen notifikasi
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.innerHTML = `
+                <i class="fas fa-check-circle"></i>
+                <span>${message}</span>
+            `;
+            
+            // Tambahkan style untuk notifikasi
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(45deg, rgba(26, 35, 126, 0.95), rgba(15, 52, 96, 0.95));
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                z-index: 1000;
+                box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                animation: slideIn 0.3s ease;
+            `;
+            
+            // Tambahkan keyframes untuk animasi
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            document.body.appendChild(notification);
+            
+            // Hapus notifikasi setelah 3 detik
+            setTimeout(() => {
+                notification.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        // Fungsi untuk generate QR code dengan data spesifik QRIS
+        function generateQrisData() {
+            // Data QRIS sesuai standar Indonesia
+            const qrisData = "00020101021126650014ID.CO.QRIS.WWW011893600911010079151520211010079150303UME51440014ID.CO.QRIS.WWW0215ID10253838340390303UME520454105802ID5914INVISIBLE ORISS6007JAKARTA6105102406238010100791503040006304";
+            
+            // Update QR code dengan data yang valid
+            const qrCodeImage = document.getElementById('qrisCode');
+            qrCodeImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrisData)}`;
+            
+            // Fallback jika gambar gagal dimuat
+            qrCodeImage.onerror = function() {
+                console.log("Menggunakan fallback QR code generator");
+                // Alternatif: gunakan Google Charts API
+                qrCodeImage.src = `https://chart.googleapis.com/chart?cht=qr&chs=220x220&chl=${encodeURIComponent(qrisData)}&choe=UTF-8`;
+            };
+        }
+        
+        // Inisialisasi saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', function() {
+            setupCopyButtons();
+            setupDotNavigation();
+            setupQrCodeAnimation();
+            generateQrisData();
+            
+            scrollContainer.addEventListener('scroll', updateNavigationDots);
+            
+            // Animasi saat halaman dimuat
+            setTimeout(() => {
+                const container = document.querySelector('.payment-container');
+                container.style.opacity = '0';
+                container.style.transform = 'translateY(20px) scale(0.95)';
+                container.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                
+                setTimeout(() => {
+                    container.style.opacity = '1';
+                    container.style.transform = 'translateY(0) scale(1)';
+                }, 100);
+            }, 100);
+            
+            // Tampilkan notifikasi selamat datang
+            setTimeout(() => {
+                showNotification('Selamat datang di INVISIBLE ORISS QRIS Payment');
+            }, 800);
+            
+            // Efek parallax sederhana pada scroll
+            window.addEventListener('scroll', () => {
+                const scrolled = window.pageYOffset;
+                const rate = scrolled * -0.5;
+                document.body.style.backgroundPosition = `center ${rate}px`;
+            });
+        });
+    </script>
+</body>
+</html>
